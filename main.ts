@@ -17,16 +17,16 @@ export default class MyPlugin extends Plugin {
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		// const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
+		// 	// Called when the user clicks the icon.
+		// 	new Notice('This is a notice!');
+		// });
+		// // Perform additional things with the ribbon
+		// ribbonIconEl.addClass('my-plugin-ribbon-class');
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+		statusBarItemEl.setText('auto reveal active file');
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
@@ -71,7 +71,10 @@ export default class MyPlugin extends Plugin {
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
+			var target = evt.target;
+			// console.log("click:", target.className);
+			if (target.className.contains("workspace-tab-header-inner-title"))
+				this.app.commands.executeCommandById('file-explorer:reveal-active-file');
 		});
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
