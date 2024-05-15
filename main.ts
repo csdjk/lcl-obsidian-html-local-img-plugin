@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Platform, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -15,70 +15,64 @@ export default class MyPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+		this.registerMarkdownCodeBlockProcessor("csv", (source, el, ctx) => {
+			const rows = source.split("\n").filter((row) => row.length > 0);
+			console.log("csv", source, el, ctx);
+			const table = el.createEl("table");
+			const body = table.createEl("tbody");
 
-		// This creates an icon in the left ribbon.
-		// const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-		// 	// Called when the user clicks the icon.
-		// 	new Notice('This is a notice!');
-		// });
-		// // Perform additional things with the ribbon
-		// ribbonIconEl.addClass('my-plugin-ribbon-class');
+			for (let i = 0; i < rows.length; i++) {
+				const cols = rows[i].split(",");
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('auto reveal active file');
+				const row = body.createEl("tr");
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+				for (let j = 0; j < cols.length; j++) {
+					row.createEl("td", { text: cols[j] });
 				}
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		// this.registerMarkdownCodeBlockProcessor("csv", (source, el, ctx) => {
+		// 	console.log("csv",source, el, ctx);
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			var target = evt.target;
-			// console.log("click:", target.className);
-			if (target.className.contains("workspace-tab-header-inner-title"))
-				this.app.commands.executeCommandById('file-explorer:reveal-active-file');
+		// });
+
+		console.log("Running on ---------------onload")
+		this.registerMarkdownPostProcessor((element, ctx) => {
+			// const img = element.querySelectorAll("img");
+			// console.log("img:", img)
+
+			// var imgTag = element.getElementsByTagName("img");
+			// console.log("imgTag:", imgTag)
+
+			const targetLinks = Array.from(element.getElementsByTagName("img"));
+
+			// const basePath = (this.app.vault.adapter as any).basePath
+			// console.log('basePath: ' + basePath)
+
+			for (const link of targetLinks) {
+				let clean_link = link.src.replace('app://obsidian.md/', '')
+
+				let imageFile = this.app.metadataCache.getFirstLinkpathDest(clean_link, ctx.sourcePath);
+				if (imageFile == null) {
+					console.log('imageFile is null')
+					continue;
+				}
+				let active_path = this.app.vault.getResourcePath(imageFile)
+
+				// For iOS
+				clean_link = clean_link.replace('capacitor://localhost/', '')
+				console.log('clean_link: ' + clean_link)
+				let full_link = active_path + '/' + clean_link
+				console.log('full_link: ' + full_link)
+				link.src = full_link
+				if (Platform.isMobile) {
+					console.log("Running on mobile platform - setting object fit and height of img")
+					link.style.objectFit = "contain"
+					link.height = 100
+				}
+			}
 		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
 	onunload() {
@@ -100,12 +94,12 @@ class SampleModal extends Modal {
 	}
 
 	onOpen() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.setText('Woah!');
 	}
 
 	onClose() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.empty();
 	}
 }
@@ -119,7 +113,7 @@ class SampleSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
