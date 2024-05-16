@@ -1,1 +1,1 @@
-This is a Auto Reveal Active File Plugin
+This is a Display the img html of the local link Plugin
