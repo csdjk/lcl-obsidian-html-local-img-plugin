@@ -48,6 +48,14 @@ export default class HtmlLocalImgPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		console.log("Running on ---------------onload")
+
+
+		this.registerMarkdownPostProcessor((element, ctx) => {
+			this.processElement(element, ctx.sourcePath);
+		})
+
+
+
 		let activeFile = this.app.workspace.getActiveFile();
 		if (activeFile) {
 			this.registerEditorExtension(
@@ -71,8 +79,7 @@ export default class HtmlLocalImgPlugin extends Plugin {
 		}
 		for (const link of targetLinks) {
 			// console.log('link.src: ', link.src);
-
-			if ( link.src == "" || link.src.includes("https://")) {
+			if (link.src == "" || link.src.includes("https://")) {
 				continue;
 			}
 			let clean_link = link.src.replace('app://obsidian.md/', '')
